@@ -14,7 +14,8 @@
 #include "load_save_png.hpp"
 
 //Includes for libSDL:
-#include <SDL.h>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_main.h>
 
 //...and for c++ standard library functions:
 #include <chrono>
@@ -64,11 +65,10 @@ int main(int argc, char **argv) {
 	//create window:
 	SDL_Window *window = SDL_CreateWindow(
 		"gp23 game1: remember to change your title", //TODO: remember to set a title for your game!
-		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
 		2*PPU466::ScreenWidth + 8, 2*PPU466::ScreenHeight + 8, //TODO: modify window size if you'd like
 		SDL_WINDOW_OPENGL
 		| SDL_WINDOW_RESIZABLE //uncomment to allow resizing
-		| SDL_WINDOW_ALLOW_HIGHDPI //uncomment for full resolution on high-DPI screens
+		| SDL_WINDOW_HIGH_PIXEL_DENSITY //uncomment for full resolution on high-DPI screens
 	);
 
 	//prevent exceedingly tiny windows when resizing:
@@ -119,7 +119,7 @@ int main(int argc, char **argv) {
 		int w,h;
 		SDL_GetWindowSize(window, &w, &h);
 		window_size = glm::uvec2(w, h);
-		SDL_GL_GetDrawableSize(window, &w, &h);
+        SDL_GetWindowSizeInPixels(window, &w, &h);
 		drawable_size = glm::uvec2(w, h);
 		glViewport(0, 0, drawable_size.x, drawable_size.y);
 	};
@@ -134,23 +134,23 @@ int main(int argc, char **argv) {
 			static SDL_Event evt;
 			while (SDL_PollEvent(&evt) == 1) {
 				//handle resizing:
-				if (evt.type == SDL_WINDOWEVENT && evt.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+				if (evt.window.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
 					on_resize();
 				}
 				//handle input:
 				if (Mode::current && Mode::current->handle_event(evt, window_size)) {
 					// mode handled it; great
-				} else if (evt.type == SDL_QUIT) {
+				} else if (evt.type == SDL_EVENT_QUIT) {
 					Mode::set_current(nullptr);
 					break;
-				} else if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_PRINTSCREEN) {
+				} else if (evt.type == SDL_EVENT_KEY_DOWN && evt.key.key == SDLK_PRINTSCREEN) {
 					// --- screenshot key ---
 					std::string filename = "screenshot.png";
 					std::cout << "Saving screenshot to '" << filename << "'." << std::endl;
 					glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 					glReadBuffer(GL_FRONT);
 					int w,h;
-					SDL_GL_GetDrawableSize(window, &w, &h);
+                    SDL_GetWindowSizeInPixels(window, &w, &h);
 					std::vector< glm::u8vec4 > data(w*h);
 					glReadPixels(0,0,w,h, GL_RGBA, GL_UNSIGNED_BYTE, data.data());
 					for (auto &px : data) {
@@ -188,7 +188,7 @@ int main(int argc, char **argv) {
 
 	//------------  teardown ------------
 
-	SDL_GL_DeleteContext(context);
+	SDL_GL_DestroyContext(context);
 	context = 0;
 
 	SDL_DestroyWindow(window);

@@ -6,6 +6,9 @@
 #include <vector>
 #include <deque>
 
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 struct PlayMode : Mode {
 	PlayMode();
 	virtual ~PlayMode();
